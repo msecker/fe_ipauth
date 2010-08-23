@@ -31,13 +31,21 @@ $EM_CONF[$_EXTKEY] = array(
 	'author_company' => '',
 	'CGLcompliance' => '',
 	'CGLcompliance_note' => '',
-	'version' => '0.0.1',
+	'version' => '0.0.0',
 	'constraints' => array(
 		'depends' => array(
+			'php' => '5.0.0-0.0.0',
+			'typo3' => '4.0.0-0.0.0',
+			'cms' => '1.0.0-0.0.0',
+			'sv' => '1.0.0-0.0.0',
 		),
 		'conflicts' => array(
+			'cc_ipauth' => '',
+			'cc_iplogin_fe' => '',
+			'cc_iplogin_be' => '',
 		),
 		'suggests' => array(
+			'fe_iplogin' => '',
 		),
 	),
 );

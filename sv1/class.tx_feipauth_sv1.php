@@ -117,17 +117,9 @@ class tx_feipauth_sv1 extends tx_sv_authbase  {
 			$OK = $this->defaultRule('user', true, false);
 		}
 
-/*
-			// if auto login is enabled user is still valid if IP do not match
-			// this needed to let the user login by login form
-		if ($user['tx_feiploginfe_auto'] OR $user['tx_feiploginbe_auto']) {
-			$OK = $OK ? $OK : 100;
-		}
-*/
-
 		if (!$OK) {
 				// Failed login attempt (wrong IP) - write that to the log!
-			$this->writelog(255,3,3,1, "Login-attempt from %s (%s), username '%s', remote address does not match IP access controll entries!", Array($this->authInfo['REMOTE_ADDR'], $this->authInfo['REMOTE_HOST'], $user[$this->db_user['username_column']]));
+			$this->writelog(255,3,3,1, "FE-Login-attempt from %s (%s), username '%s', remote address does not match IP access controll entries!", Array($this->authInfo['REMOTE_ADDR'], $this->authInfo['REMOTE_HOST'], $user[$this->db_user['username_column']]));
 		}
 
 		return $OK;
@@ -151,6 +143,11 @@ class tx_feipauth_sv1 extends tx_sv_authbase  {
 		} else {
 				// When no cache records have been found for this group/IP combination set result to default
 			$valid = $this->defaultRule('group', true, false);
+		}
+
+		if (!$valid) {
+				// Failed login attempt (wrong IP) - write that to the log!
+			$this->writelog(255,3,3,1, "FE-Usergroup '%s' (%s) is not allowed to login from address %s (%s). Remote address does not match IP access controll entries!", Array($group['title'], $group['uid'], $this->authInfo['REMOTE_ADDR'], $this->authInfo['REMOTE_HOST']));
 		}
 		
 		return $valid;
@@ -268,6 +265,29 @@ class tx_feipauth_sv1 extends tx_sv_authbase  {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Writes an entry in the logfile/table
+	 * Documentation in "TYPO3 Core API"
+	 * @see t3lib/class.t3lib_userauthgroup.php
+	 *
+	 * @param	integer		Denotes which module that has submitted the entry. See "TYPO3 Core API". Use "4" for extensions.
+	 * @param	integer		Denotes which specific operation that wrote the entry. Use "0" when no sub-categorizing applies
+	 * @param	integer		Flag. 0 = message, 1 = error (user problem), 2 = System Error (which should not happen), 3 = security notice (admin)
+	 * @param	integer		The message number. Specific for each $type and $action. This will make it possible to translate errormessages to other languages
+	 * @param	string		Default text that follows the message (in english!). Possibly translated by identification through type/action/details_nr
+	 * @param	array		Data that follows the log. Might be used to carry special information. If an array the first 5 entries (0-4) will be sprintf'ed with the details-text
+	 * @param	string		Table name. Special field used by tce_main.php.
+	 * @param	integer		Record UID. Special field used by tce_main.php.
+	 * @param	integer		Record PID. Special field used by tce_main.php. OBSOLETE
+	 * @param	integer		The page_uid (pid) where the event occurred. Used to select log-content for specific pages.
+	 * @param	string		Special field used by tce_main.php. NEWid string of newly created records.
+	 * @param	integer		Alternative Backend User ID (used for logging login actions where this is not yet known).
+	 * @return	integer		Log entry ID.
+	 */
+	function writelog($type,$action,$error,$details_nr,$details,$data,$tablename='',$recuid='',$recpid='',$event_pid=-1,$NEWid='',$userId=0) {
+		t3lib_userAuthGroup::writelog($type, $action, $error, $details_nr, $details, $data, $tablename, $recuid, $recpid, $event_pid, $NEWid, $userId);
 	}
 
 }

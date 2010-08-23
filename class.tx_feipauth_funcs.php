@@ -66,6 +66,14 @@ class tx_feipauth_funcs {
 		$zero_start = false;
 		$zero_length = 0;
 		$cnt = 0;
+
+			// Split 32-bit int values in two 16-bit values
+		foreach ($address as $address_part) {
+			$splitted_address[] = intval($address_part/0x10000);
+			$splitted_address[] = intval($address_part%0x10000);
+		}
+		$address = $splitted_address;
+
 		foreach ($address as $address_part) {
 			if (!$address_part) {
 				if ($zero_start !== false) {
@@ -291,10 +299,10 @@ class tx_feipauth_funcs {
 			$netmask = (count($parts) > 1) ? $parts[1] : '';
 			$address_int = array();
 			$netmask_int = array();
-			if ($netmask) {
+			if (strlen($netmask)) {
 				if (t3lib_div::testInt($netmask)) {
 					$netmask_int = $this->netmask_digits2int_v6($netmask);
-					if (!$netmask_int) {
+					if (!is_array($netmask_int)) {
 						return false;
 					}
 				} else {
@@ -332,7 +340,7 @@ class tx_feipauth_funcs {
 			$netmask = $parts[1];
 			$ip_int = ip2long($address);
 
-			if ($netmask) {
+			if (strlen($netmask)) {
 				if (t3lib_div::testInt($netmask)) {
 					$netmask_int = $this->netmask_digits2int($netmask);
 				} else {
@@ -394,6 +402,13 @@ class tx_feipauth_funcs {
 		if (substr($address, 0, 1) === ':') {
 			if (substr($address, 0, 2) === '::') {
 				$address = substr($address, 1);
+			} else {
+				return false;
+			}
+		}
+		if (substr($address, -1, 1) === ':') {
+			if (substr($address, -2, 2) === '::') {
+				$address = substr($address, 0, -1);
 			} else {
 				return false;
 			}
