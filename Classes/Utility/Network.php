@@ -1,6 +1,9 @@
 <?php
+namespace Alto\FeIpauth\Utility;
 /***************************************************************
 *  Copyright notice
+*
+*  (c) 2015 Matthias Secker <secker@alto.de>
 *
 *  (c) 2010 Bernhard Kraft <kraftb@think-open.at>
 *  All rights reserved
@@ -24,6 +27,7 @@
 /** 
  * Class for handling and working with IP addresses (IPv4 and IPv6)
  *
+ * @author	Matthias Secker <secker@alto.de>
  * @author	Bernhard Kraft <kraftb@think-open.at>
  */
 /**
@@ -31,8 +35,8 @@
  */
 
 
-class tx_feipauth_funcs {
-	var $cacheTable = 'tx_feipauth_ipcache';
+class Network {
+	protected $cacheTable = 'tx_feipauth_ipcache';
 
 
 	/*
@@ -61,13 +65,13 @@ class tx_feipauth_funcs {
 	 * @return string The textual string representation of the passed address
 	 */
 	public function IPv6_to_string($address, $netmask) {
-			// First determine if there are any zero-areas which can get removed
+		// First determine if there are any zero-areas which can get removed
 		$zero_map = array();
 		$zero_start = false;
 		$zero_length = 0;
 		$cnt = 0;
 
-			// Split 32-bit int values in two 16-bit values
+		// Split 32-bit int values in two 16-bit values
 		foreach ($address as $address_part) {
 			$splitted_address[] = intval($address_part/0x10000);
 			$splitted_address[] = intval($address_part%0x10000);
@@ -169,6 +173,7 @@ class tx_feipauth_funcs {
 	public function getIPcache($user, $group, $searchIP, $types = array()) {
 		$fields = array('user_id', 'group_id', 'rule_type', 'is_v6', 'address_0', 'address_1', 'address_2', 'address_3', 'netmask_0', 'netmask_1', 'netmask_2', 'netmask_3', 'network_0', 'network_1', 'network_2', 'network_3', 'host_0', 'host_1', 'host_2', 'host_3');
 		$searchParts = array();
+
 		if ($searchIP) {
 			for ($x = 0; $x < 4; $x++) {
 				$searchParts[] = 'network_'.$x.' = (netmask_'.$x.' & '.$searchIP[0][$x].')';
@@ -201,8 +206,9 @@ class tx_feipauth_funcs {
 			$searchParts[] = 'rule_type IN ('.implode(',', $types).')';
 		}
 		$searchString = implode(' AND ', $searchParts);
+
 		$cacheRecords = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows(implode(',', $fields), $this->cacheTable, $searchString, $groupBy, $orderBy);
-		
+
 		return $cacheRecords;
 	}
 
@@ -293,14 +299,14 @@ class tx_feipauth_funcs {
 	 * @return mixed Either the parsed and validated IP address or false on error
 	 */
 	protected function validateIP_IPv6($ipAddress) {
-		$parts = t3lib_div::trimExplode('/', $ipAddress);
+		$parts = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('/', $ipAddress);
 		if ((count($parts) == 1) || (count($parts) == 2)) {
 			$address = $parts[0];
 			$netmask = (count($parts) > 1) ? $parts[1] : '';
 			$address_int = array();
 			$netmask_int = array();
 			if (strlen($netmask)) {
-				if (t3lib_div::testInt($netmask)) {
+				if (\TYPO3\CMS\Core\Utility\MathUtility::canBeInterpretedAsInteger($netmask)) {
 					$netmask_int = $this->netmask_digits2int_v6($netmask);
 					if (!is_array($netmask_int)) {
 						return false;
@@ -334,14 +340,14 @@ class tx_feipauth_funcs {
 	 * @return mixed Either the parsed and validated IP address or false on error
 	 */
 	protected function validateIP_IPv4($ipAddress) {
-		$parts = t3lib_div::trimExplode('/', $ipAddress);
+		$parts = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('/', $ipAddress);
 		if ((count($parts) == 1) || (count($parts) == 2)) {
 			$address = $parts[0];
 			$netmask = $parts[1];
 			$ip_int = ip2long($address);
 
 			if (strlen($netmask)) {
-				if (t3lib_div::testInt($netmask)) {
+				if (\TYPO3\CMS\Core\Utility\MathUtility::canBeInterpretedAsInteger($netmask)) {
 					$netmask_int = $this->netmask_digits2int($netmask);
 				} else {
 					$netmask_int = ip2long($netmask);
@@ -413,7 +419,7 @@ class tx_feipauth_funcs {
 				return false;
 			}
 		}
-		$address_parts = t3lib_div::trimExplode(':', $address);
+		$address_parts = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(':', $address);
 		$addressPartCount = count($address_parts);
 		if ($addressPartCount > 8) {
 			return false;
@@ -450,11 +456,11 @@ class tx_feipauth_funcs {
 	protected function netmask_digits2int_v6($netmask) {
 		$netmask = intval($netmask);
 		$netmask_int = array();
-			// Must not be negative. Must not be larger than 16bytes * 8bits/byte = 128bits
+		// Must not be negative. Must not be larger than 16bytes * 8bits/byte = 128bits
 		if (($netmask < 0) || ($netmask > 16*8)) {
 			return false;
 		}
-			// 4 Steps, each time processing 32bits ==> 128bits
+		// 4 Steps, each time processing 32bits ==> 128bits
 		for ($x = 0; $x < 4; $x++) {
 			if ($netmask > 32) {
 				$netmask_int[$x] = 0xffffffff;
@@ -476,17 +482,11 @@ class tx_feipauth_funcs {
 	 * @return integer The IPv4 netmask as unsigned integer
 	 */
 	protected function netmask_digits2int($netmask) {
+
 		$netmask = intval($netmask);
 		$netmaskInt = false;
 		if (($netmask >= 0) && ($netmask <= 32)) {
-			$netmaskInt = 0;
-			for ($bit = 0; $bit < 32; $bit++) {
-				$netmaskInt = $netmaskInt << 1;
-				if ($netmask>0) {
-					$netmaskInt |= 1;
-				}
-				$netmask--;
-			}
+			$netmaskInt = ~((1 << (32 - $netmask)) - 1);
 		}
 		return $netmaskInt;
 	}
@@ -498,8 +498,8 @@ class tx_feipauth_funcs {
 	 * @return boolean Wheter the passed netmask is ok or not
 	 */
 	protected function netmask_ok($netmaskInt) {
-			// Check if the netmask begins with 1's and ends with 0's. There must not
-			// be any 1's after the first 0
+		// Check if the netmask begins with 1's and ends with 0's. There must not
+		// be any 1's after the first 0
 		$hostPart = false;
 		for ($x = 31; $x >= 0; $x--) {
 			$testBit = $netmaskInt & (1 << $x);
@@ -521,7 +521,7 @@ class tx_feipauth_funcs {
 	 * @return array The first entry in the array will contain the address/network as unsigned integer while the second value in the array will contain the netmask as unsigned integer
 	 */
 	protected function wildcardedIP_to_addressAndNetmask($address) {
-		$ip_parts = t3lib_div::trimExplode('.', $address);
+		$ip_parts = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('.', $address);
 		if (count($ip_parts) != 4) {
 			return false;
 		}
@@ -552,8 +552,5 @@ class tx_feipauth_funcs {
 }
 
 
-if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_ipauth/class.tx_feipauth_funcs.php']) {
-	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_ipauth/class.tx_feipauth_funcs.php']);
-}
 
 ?>

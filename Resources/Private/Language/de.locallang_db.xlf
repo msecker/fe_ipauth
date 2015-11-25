@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="messages" date="2015-09-17T15:36:22Z" product-name="fe_ipauth">
+		<header/>
+		<body>
+			<trans-unit id="fe_users.tx_feipauth_ip_allow">
+				<source>Allowed IPs (192.168.*.*, 10.0.0.0/24, ::1):</source>
+				<target>Zugelassene IPs (192.168.*.*, 10.0.0.0/24, ::1):</target>
+			</trans-unit>
+			<trans-unit id="fe_users.tx_feipauth_ip_deny">
+				<source>Denied IPs (192.168.*.*, 10.0.0.0/24, ::1):</source>
+				<target>Abgelehnte IPs (192.168.*.*, 10.0.0.0/24, ::1):</target>
+			</trans-unit>
+			<trans-unit id="fe_groups.tx_feipauth_ip_allow">
+				<source>Allowed IPs (192.168.*.*, 10.0.0.0/24, ::1):</source>
+				<target>Zugelassene IPs (192.168.*.*, 10.0.0.0/24, ::1):</target>
+			</trans-unit>
+			<trans-unit id="fe_groups.tx_feipauth_ip_deny">
+				<source>Denied IPs (192.168.*.*, 10.0.0.0/24, ::1):</source>
+				<target>Abgelehnte IPs (192.168.*.*, 10.0.0.0/24, ::1):</target>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

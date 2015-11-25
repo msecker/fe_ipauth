@@ -3,7 +3,7 @@
 ########################################################################
 # Extension Manager/Repository config file for ext "fe_ipauth".
 #
-# Auto generated 12-07-2010 12:41
+# Auto generated 07-08-2015 21:05
 #
 # Manual updates:
 # Only the data in the array - everything else is removed by next
@@ -15,6 +15,7 @@ $EM_CONF[$_EXTKEY] = array(
 	'description' => 'Allows FE authentication against IP lists.',
 	'category' => 'services',
 	'shy' => 0,
+	'version' => '0.2.0',
 	'dependencies' => '',
 	'conflicts' => '',
 	'priority' => '',
@@ -24,28 +25,23 @@ $EM_CONF[$_EXTKEY] = array(
 	'uploadfolder' => 0,
 	'createDirs' => '',
 	'modify_tables' => 'fe_users,fe_groups',
-	'clearCacheOnLoad' => 1,
+	'clearcacheonload' => 1,
 	'lockType' => '',
-	'author' => 'Bernhard Kraft',
-	'author_email' => 'kraftb@think-open.at',
-	'author_company' => '',
+	'author' => 'Matthias Secker',
+	'author_email' => 'secker@alto.de',
+	'author_company' => 'alto.de New Media GmbH',
 	'CGLcompliance' => '',
 	'CGLcompliance_note' => '',
-	'version' => '0.0.1',
 	'constraints' => array(
 		'depends' => array(
-			'php' => '5.0.0-0.0.0',
-			'typo3' => '4.0.0-0.0.0',
-			'cms' => '1.0.0-0.0.0',
-			'sv' => '1.0.0-0.0.0',
+			'typo3' => '6.2-7.6',
 		),
 		'conflicts' => array(
-			'cc_ipauth' => '',
-			'cc_iplogin_fe' => '',
-			'cc_iplogin_be' => '',
+			'cc_ipauth' => '0.0.0',
+			'cc_iplogin_fe' => '0.0.0',
+			'cc_iplogin_be' => '0.0.0'
 		),
 		'suggests' => array(
-			'fe_iplogin' => '',
 		),
 	),
 );

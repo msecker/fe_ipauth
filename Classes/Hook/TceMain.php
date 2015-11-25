@@ -1,6 +1,9 @@
 <?php
+namespace Alto\FeIpauth\Hook;
 /***************************************************************
 *  Copyright notice
+*
+*  (c) 2015 Matthias Secker <secker@alto.de>
 *
 *  (c) 2010 Bernhard Kraft <kraftb@think-open.at>
 *  All rights reserved
@@ -24,6 +27,7 @@
 /** 
  * Hooks for TCEmain
  *
+ * @author	Matthias Secker <secker@alto.de>
  * @author	Bernhard Kraft <kraftb@think-open.at>
  */
 /**
@@ -31,12 +35,17 @@
  */
 
 
-require_once(t3lib_extMgm::extPath('fe_ipauth').'class.tx_feipauth_funcs.php');
 
-class tx_feipauth_tcemain {
-	var $cacheTable = 'tx_feipauth_ipcache';
-	var $ipFuncs = NULL;
-	var $ipListFields = array(
+class TceMain {
+	protected $cacheTable = 'tx_feipauth_ipcache';
+
+	/**
+	 * @var \Alto\FeIpauth\Utility\Network
+	 */
+	protected $networkUtility = NULL;
+
+	protected $datamap;
+	protected $ipListFields = array(
 		'tx_feipauth_ip_allow' => 1,
 		'tx_feipauth_ip_deny' => 2,
 	);
@@ -47,8 +56,8 @@ class tx_feipauth_tcemain {
 	 *
 	 * @return void
 	 */
-	public function tx_feipauth_tcemain() {
-		$this->ipFuncs = t3lib_div::makeInstance('tx_feipauth_funcs');
+	public function __construct() {
+		$this->networkUtility = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('\\Alto\\FeIpauth\\Utility\\Network');
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fe_ipauth']['extraIpListFields'])) {
 			foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fe_ipauth']['extraIpListFields'] as $field => $rule_type) {
 				$this->ipListFields[$field] = $rule_type;
@@ -81,7 +90,7 @@ class tx_feipauth_tcemain {
 				$this->datamap = array();
 				$this->processFields($fieldArray, $table, $id, $user, $group);
 
-				$TCE = t3lib_div::makeInstance('t3lib_TCEmain');
+				$TCE = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('\\TYPO3\\CMS\\Core\\DataHandling\\DataHandler');
 				$TCE->stripslashes_values = false;
 				$TCE->start($this->datamap, array());
 				$TCE->process_datamap();
@@ -106,6 +115,7 @@ class tx_feipauth_tcemain {
 			if (isset($fieldArray[$ipField])) {
 				$ipList = $fieldArray[$ipField];
 				$ipArray = $this->validateIPs($ipList);
+
 				$this->setIPcache($user, $group, $rule, $ipArray);
 				$validList = $this->IPs_to_list($ipArray);
 				$this->datamap[$table][$id][$ipField] = $validList;
@@ -123,15 +133,18 @@ class tx_feipauth_tcemain {
 	 * @return void
 	 */
 	protected function setIPcache($user, $group, $rule, $ipArray) {
+
 		$rule = intval($rule);
 		if ($user) {
 			$GLOBALS['TYPO3_DB']->exec_DELETEquery($this->cacheTable, 'user_id='.$user.' AND (rule_type='.$rule.' OR rule_type=0)');
 		} elseif ($group) {
 			$GLOBALS['TYPO3_DB']->exec_DELETEquery($this->cacheTable, 'group_id='.$group.' AND (rule_type='.$rule.' OR rule_type=0)');
 		}
+
 		foreach ($ipArray as $ipSet)  {
 			$address = $ipSet[0];
 			$netmask = $ipSet[1];
+
 			if (is_array($address)) {
 				$insertData = $this->getCacheArray_v6($address, $netmask);
 			} else {
@@ -140,6 +153,7 @@ class tx_feipauth_tcemain {
 			$insertData['rule_type'] = $rule;
 			$insertData['user_id'] = $user;
 			$insertData['group_id'] = $group;
+
 			$GLOBALS['TYPO3_DB']->exec_INSERTquery($this->cacheTable, $insertData);
 		}
 	}
@@ -152,12 +166,14 @@ class tx_feipauth_tcemain {
 	 * @return void
 	 */
 	protected function getCacheArray_v4($address, $netmask) {
-		return array(
-			'address_0' => $address,
-			'netmask_0' => $netmask,
-			'network_0' => $address & $netmask,
-			'host_0' => $address & (~$netmask & 0xffffffff),
+		$records =  array(
+			'address_0' => sprintf("%u", $address),
+			'netmask_0' => sprintf("%u", $netmask),
+			'network_0' => sprintf("%u", $address & $netmask),
+			'host_0' => sprintf("%u", $address & (~$netmask & 0xffffffff)),
 		);
+
+		return $records;
 	}
 
 	/*
@@ -188,10 +204,10 @@ class tx_feipauth_tcemain {
 	 * @return array The passed string list cleand up and in array form for internal usage
 	 */
 	protected function validateIPs($ipList) {
-		$ipAddresses = t3lib_div::trimExplode(',', $ipList, 1);
+		$ipAddresses = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $ipList, 1);
 		$result = array();
 		foreach ($ipAddresses as $ipAddress) {
-			$validIP = $this->ipFuncs->validateIP($ipAddress);
+			$validIP = $this->networkUtility->validateIP($ipAddress);
 			if ($validIP) {
 				$result[] = $validIP;
 			}
@@ -208,14 +224,14 @@ class tx_feipauth_tcemain {
 	public function IPs_to_list($ipArray) {
 		$result = array();
 		foreach ($ipArray as $ipAddress) {
-			if ($ipString = $this->ipFuncs->IP_to_string($ipAddress)) {
+			if ($ipString = $this->networkUtility->IP_to_string($ipAddress)) {
 				$result[] = $ipString;
 			}
 		}
 		$result = array_unique($result);
-			// It can be the case that an invalid value was found when the addresses got parsed
-			// This will result in an 0.0.0.0/32 IPv4 address which gets removed here
-			// TODO: Check that illegal values get not parsed to this IP address
+		// It can be the case that an invalid value was found when the addresses got parsed
+		// This will result in an 0.0.0.0/32 IPv4 address which gets removed here
+		// TODO: Check that illegal values get not parsed to this IP address
 		$result = array_diff($result, array('0.0.0.0/32'));
 		return implode(', ', $result);
 	}
@@ -223,8 +239,5 @@ class tx_feipauth_tcemain {
 }
 
 
-if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_ipauth/class.tx_feipauth_tcemain.php']) {
-	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_ipauth/class.tx_feipauth_tcemain.php']);
-}
 
 ?>

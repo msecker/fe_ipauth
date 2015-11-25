@@ -1,22 +1,24 @@
 
-	# cat=basic; type=options[deny,allow]; label=FE-User / Check rule first: Determines wheter the "deny" or the "allow" rules are checked first for FE-Users. If their are no IP-entires for the specified rule-set the other rule-set will get taken into account. If the user is found in the rule set it depends on the following "FE-User / Allow rule override" setting if the other rule-set of the user will also get checked.
+
+# cat=basic; type=options[deny,allow]; label=FE-User / Check rule first: Determines wheter the "deny" or the "allow" rules are checked first for FE-Users. If their are no IP-entires for the specified rule-set the other rule-set will get taken into account. If the user is found in the rule set it depends on the following "FE-User / Allow rule override" setting if the other rule-set of the user will also get checked.
 checkRuleFirst_FE_user = deny
 
-	# cat=basic; type=options[no,yes]; label=FE-User / Allow rule override: When a FE-User user is authenticated the first rule (allow, deny) to check is determined by the above seting "FE-User / Check rule first" setting. Depending on the value of this (FE-User / Allow rule override) setting it depends wheter the second rule is also taken into account. If this option is set to "Yes" it will allow the second rule to overrule the first one.
+# cat=basic; type=options[no,yes]; label=FE-User / Allow rule override: When a FE-User user is authenticated the first rule (allow, deny) to check is determined by the above seting "FE-User / Check rule first" setting. Depending on the value of this (FE-User / Allow rule override) setting it depends wheter the second rule is also taken into account. If this option is set to "Yes" it will allow the second rule to overrule the first one.
 allowOverride_FE_user = no
 
-	# cat=basic; type=options[deny,allow]; label=FE-User / Default rule: This setting determines the outcome of a FE-User login if the IP of the user is not found either in the allow or deny section. If it is set to "deny" only logins with explicitly allowed IPs will be possible. If set to "allow" then username/password logins will be allowed if the remote IP is not mentioned in any of the IP fields.
+# cat=basic; type=options[deny,allow]; label=FE-User / Default rule: This setting determines the outcome of a FE-User login if the IP of the user is not found either in the allow or deny section. If it is set to "deny" only logins with explicitly allowed IPs will be possible. If set to "allow" then username/password logins will be allowed if the remote IP is not mentioned in any of the IP fields.
 defaultRule_FE_user = deny
 
-	# cat=basic; type=options[deny,allow]; label=FE-Group / Check rule first: Determines wheter the "deny" or the "allow" rules are checked first for FE-Groups. If their are no IP-entires for the specified rule-set the other rule-set will get taken into account. If the group is found in the rule set it depends on the following "FE-Group / Allow rule override" setting if the other rule-set of the FE-Group will also get checked.
+# cat=basic; type=options[deny,allow]; label=FE-Group / Check rule first: Determines wheter the "deny" or the "allow" rules are checked first for FE-Groups. If their are no IP-entires for the specified rule-set the other rule-set will get taken into account. If the group is found in the rule set it depends on the following "FE-Group / Allow rule override" setting if the other rule-set of the FE-Group will also get checked.
 checkRuleFirst_FE_group = deny
 
-	# cat=basic; type=options[no,yes]; label=FE-Group / Allow rule override: When a user in a FE-Group is authenticated the first rule (allow, deny) to check is determined by the above seting "FE-Group / Check rule first" setting. Depending on the value of this (FE-Group / Allow rule override) setting it depends wheter the second rule is also taken into account. If this option is set to "Yes" it will allow the second rule to overrule the first one.
+# cat=basic; type=options[no,yes]; label=FE-Group / Allow rule override: When a user in a FE-Group is authenticated the first rule (allow, deny) to check is determined by the above seting "FE-Group / Check rule first" setting. Depending on the value of this (FE-Group / Allow rule override) setting it depends wheter the second rule is also taken into account. If this option is set to "Yes" it will allow the second rule to overrule the first one.
 allowOverride_FE_group = no
 
-	# cat=basic; type=options[deny,allow]; label=FE-Group / Default rule: This setting determines the outcome of a login for a user in a FE-Group with no matchin IP in either the allow or deny section. If this value is set to "deny" only logins with explicitly allowed IPs will be possible. If set to "allow" then username/password logins will be allowed if the remote IP is not mentioned in any of this groups IP fields.
+# cat=basic; type=options[deny,allow]; label=FE-Group / Default rule: This setting determines the outcome of a login for a user in a FE-Group with no matchin IP in either the allow or deny section. If this value is set to "deny" only logins with explicitly allowed IPs will be possible. If set to "allow" then username/password logins will be allowed if the remote IP is not mentioned in any of this groups IP fields.
 defaultRule_FE_group = deny
 
-	# cat=basic; type=string; label=DEBUG / Simulate IP: This allows you to simulate an IP. Fill in an IPv4 or an IPv6 address and every hit in the FE will look like it would come from this IP. This only works if the real originating IP is listed in devIPmask. (Notice: You will be logged out of the BE after first hitting the FE, as the current BE session will get invalidated by simulating another IP)
-simulateIP = 
+# cat=basic; type=string; label=DEBUG / Simulate IP: This allows you to simulate an IP. Fill in an IPv4 or an IPv6 address and every hit in the FE will look like it would come from this IP. This only works if the real originating IP is listed in devIPmask. (Notice: You will be logged out of the BE after first hitting the FE, as the current BE session will get invalidated by simulating another IP)
+simulateIP =
+
 

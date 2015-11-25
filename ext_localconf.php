@@ -18,13 +18,13 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$_EXTKEY]['defaultRule_FE_group'] = trim(
 $GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$_EXTKEY]['simulateIP'] = trim($_EXTCONF['simulateIP']);
 
 if ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$_EXTKEY]['simulateIP']) {
-	$GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['tslib/index_ts.php']['preprocessRequest']['fe_ipauth'] = 'EXT:fe_ipauth/class.tx_feipauth_earlyHook.php:tx_feipauth_earlyHook->simulateIP';
+	$GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['tslib/index_ts.php']['preprocessRequest']['fe_ipauth'] = 'EXT:fe_ipauth/Classes/Hook/EarlyHook.php:EarlyHook->simulateIP';
 }
 
 
-$GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_tcemain.php']['processDatamapClass']['fe_ipauth'] = 'EXT:fe_ipauth/class.tx_feipauth_tcemain.php:tx_feipauth_tcemain';
+$GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_tcemain.php']['processDatamapClass']['fe_ipauth'] = 'Alto\\FeIpauth\\Hook\\TceMain';
 
-t3lib_extMgm::addService($_EXTKEY,  'auth' /* sv type */,  'tx_feipauth_sv1' /* sv key */,
+\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addService($_EXTKEY,  'auth' /* sv type */,  'Alto\\FeIpauth\\Service\\AuthenticationService' /* sv key */,
 		array(
 			'title' => 'IP Authentication',
 			'description' => 'Authenticates against IP lists',
@@ -38,8 +38,8 @@ t3lib_extMgm::addService($_EXTKEY,  'auth' /* sv type */,  'tx_feipauth_sv1' /* 
 			'os' => '',
 			'exec' => '',
 
-			'classFile' => t3lib_extMgm::extPath($_EXTKEY).'sv1/class.tx_feipauth_sv1.php',
-			'className' => 'tx_feipauth_sv1',
+			'classFile' => \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath($_EXTKEY).'Classes/Service/AuthenticationService.php',
+			'className' => 'Alto\FeIpauth\Service\AuthenticationService',
 		)
 	);
 	

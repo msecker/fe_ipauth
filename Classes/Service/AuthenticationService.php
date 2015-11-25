@@ -1,7 +1,11 @@
 <?php
+namespace Alto\FeIpauth\Service;
+
 /***************************************************************
 *  Copyright notice
-*  
+*
+*  (c) 2015 Matthias Secker <secker@alto.de>
+*
 *  (c) 2010 Bernhard Kraft (kraftb@think-open.at)
 *  All rights reserved
 *
@@ -24,19 +28,28 @@
 /** 
  * Service 'IP Authentication' for the 'fe_ipauth' extension.
  *
+ * @author	Matthias Secker <secker@alto.de>
  * @author	Bernhard Kraft <kraftb@think-open.at>
  */
 
 
-require_once(t3lib_extMgm::extPath('fe_ipauth').'class.tx_feipauth_funcs.php');
 
-class tx_feipauth_sv1 extends tx_sv_authbase  {
-	var $doDebugIP = '';
-//	var $doDebugIP = '::1';				// For testing IPv6
-//	var $doDebugIP = '192.168.8.101';		// For testing IPv4
-	var $cacheTable = 'tx_feipauth_ipcache';
-	var $ipFuncs = NULL;
-	var $rules = array(
+class AuthenticationService extends \TYPO3\CMS\Sv\AbstractAuthenticationService  {
+	protected $doDebugIP = '';
+//	protected $doDebugIP = '::1';				// For testing IPv6
+//	protected $doDebugIP = '192.168.8.101';		// For testing IPv4
+	protected $cacheTable = 'tx_feipauth_ipcache';
+
+	/**
+	 * @var \Alto\FeIpauth\Utility\Network
+	 */
+	protected $networkUtility = NULL;
+
+
+	/**
+	 * @var array
+	 */
+	protected $rules = array(
 		'allow' => 1,
 		'deny' => 2,
 	);
@@ -52,28 +65,28 @@ class tx_feipauth_sv1 extends tx_sv_authbase  {
 	 * @return void
 	 */
 	function initAuth($mode, $loginData, $authInfo, &$pObj) {
-		parent::initAuth($mode, $login, $authInfo, $pObj);
+		parent::initAuth($mode, $loginData, $authInfo, $pObj);
 		$this->pObj = &$pObj;
-			// For debugging purposes
+		// For debugging purposes
 		if ($this->doDebugIP) {
 			$this->authInfo['REMOTE_ADDR'] = $this->doDebugIP;
 		}
 	}
 
 	/**
-	 * Constructor: Initialize an ipFuncs object instance
+	 * Constructor: Initialize an networkUtility object instance
 	 *
 	 * @return void
 	 */	
-	function tx_feipauth_sv1() {
-		$this->ipFuncs = t3lib_div::makeInstance('tx_feipauth_funcs');
+	public function __construct() {
+		$this->networkUtility = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('\\Alto\\FeIpauth\\Utility\\Network');
 
-			// Settings for FE users
+		// Settings for FE users
 		$this->checkRuleFirst['FE']['user'] = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fe_ipauth']['checkRuleFirst_FE_user'];
 		$this->allowOverride['FE']['user'] = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fe_ipauth']['allowOverride_FE_user'];
 		$this->defaultRule['FE']['user'] = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fe_ipauth']['defaultRule_FE_user'];
 
-			// Settings for FE groups
+		// Settings for FE groups
 		$this->checkRuleFirst['FE']['group'] = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fe_ipauth']['checkRuleFirst_FE_group'];
 		$this->allowOverride['FE']['group'] = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fe_ipauth']['allowOverride_FE_group'];
 		$this->defaultRule['FE']['group'] = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fe_ipauth']['defaultRule_FE_group'];
@@ -106,11 +119,11 @@ class tx_feipauth_sv1 extends tx_sv_authbase  {
 	 * @param array Data of user
 	 * @return integer If user could get authenticated or not and wheter to continue authentication process (0-200 ... see servic class API or description above
 	 */	
-	function authUser($user)	{
-		$myIP = $this->ipFuncs->validateIP($this->authInfo['REMOTE_ADDR']);
-		$myIP = $this->ipFuncs->toCacheFormat($myIP);
+	public function authUser($user)	{
+		$myIP = $this->networkUtility->validateIP($this->authInfo['REMOTE_ADDR']);
+		$myIP = $this->networkUtility->toCacheFormat($myIP);
 
-		if ($myIP && ($cacheRecords = $this->ipFuncs->getIPcache($user['uid'], 0, $myIP))) {
+		if ($myIP && ($cacheRecords = $this->networkUtility->getIPcache($user['uid'], 0, $myIP))) {
 			$OK = $this->authenticationProcess('user', 100, false, $cacheRecords);
 		} else {
 				// When no cache records have been found for this user/IP combination set result to default
@@ -121,7 +134,6 @@ class tx_feipauth_sv1 extends tx_sv_authbase  {
 				// Failed login attempt (wrong IP) - write that to the log!
 			$this->writelog(255,3,3,1, "FE-Login-attempt from %s (%s), username '%s', remote address does not match IP access controll entries!", Array($this->authInfo['REMOTE_ADDR'], $this->authInfo['REMOTE_HOST'], $user[$this->db_user['username_column']]));
 		}
-
 		return $OK;
 	}
 	
@@ -134,22 +146,24 @@ class tx_feipauth_sv1 extends tx_sv_authbase  {
 	 * @param array  The fe_groups record for the group being authenticated
 	 * @return boolean Returns "true" if a user of the checked group is allowed to login
 	 */
-	function authGroup($user, $group) {
-		$myIP = $this->ipFuncs->validateIP($this->authInfo['REMOTE_ADDR']);
-		$myIP = $this->ipFuncs->toCacheFormat($myIP);
+	public function authGroup($user, $group) {
+		$myIP = $this->networkUtility->validateIP($this->authInfo['REMOTE_ADDR']);
+		$myIP = $this->networkUtility->toCacheFormat($myIP);
+		$cacheRecords = $this->networkUtility->getIPcache(0, $group['uid'], $myIP);
 
-		if ($myIP && ($cacheRecords = $this->ipFuncs->getIPcache(0, $group['uid'], $myIP))) {
+
+		if ($myIP && ($cacheRecords = $this->networkUtility->getIPcache(0, $group['uid'], $myIP))) {
 			$valid = $this->authenticationProcess('group', true, false, $cacheRecords);
 		} else {
-				// When no cache records have been found for this group/IP combination set result to default
+			// When no cache records have been found for this group/IP combination set result to default
 			$valid = $this->defaultRule('group', true, false);
 		}
 
 		if (!$valid) {
-				// Failed login attempt (wrong IP) - write that to the log!
-			$this->writelog(255,3,3,1, "FE-Usergroup '%s' (%s) is not allowed to login from address %s (%s). Remote address does not match IP access controll entries!", Array($group['title'], $group['uid'], $this->authInfo['REMOTE_ADDR'], $this->authInfo['REMOTE_HOST']));
+			// Failed login attempt (wrong IP) - write that to the log!
+			$this->writelog(255,3,3,1, "FE-Usergroup '%s' (%s) is not allowed to login from address %s (%s). Remote address does not match IP access controll entries!", array($group['title'], $group['uid'], $this->authInfo['REMOTE_ADDR'], $this->authInfo['REMOTE_HOST']));
 		}
-		
+
 		return $valid;
 	}
 
@@ -215,6 +229,7 @@ class tx_feipauth_sv1 extends tx_sv_authbase  {
 				}
 			}
 		}
+
 		return $current;
 	}
 
@@ -227,7 +242,7 @@ class tx_feipauth_sv1 extends tx_sv_authbase  {
 	 * @return mixed The default value set for the passed type
 	 */	
 	private function defaultRule($type, $allowSetting, $denySetting) {
-			// Variable check
+		// Variable check
 		switch ($type) {
 			case 'user':
 			case 'group':
@@ -267,34 +282,9 @@ class tx_feipauth_sv1 extends tx_sv_authbase  {
 		return false;
 	}
 
-	/**
-	 * Writes an entry in the logfile/table
-	 * Documentation in "TYPO3 Core API"
-	 * @see t3lib/class.t3lib_userauthgroup.php
-	 *
-	 * @param	integer		Denotes which module that has submitted the entry. See "TYPO3 Core API". Use "4" for extensions.
-	 * @param	integer		Denotes which specific operation that wrote the entry. Use "0" when no sub-categorizing applies
-	 * @param	integer		Flag. 0 = message, 1 = error (user problem), 2 = System Error (which should not happen), 3 = security notice (admin)
-	 * @param	integer		The message number. Specific for each $type and $action. This will make it possible to translate errormessages to other languages
-	 * @param	string		Default text that follows the message (in english!). Possibly translated by identification through type/action/details_nr
-	 * @param	array		Data that follows the log. Might be used to carry special information. If an array the first 5 entries (0-4) will be sprintf'ed with the details-text
-	 * @param	string		Table name. Special field used by tce_main.php.
-	 * @param	integer		Record UID. Special field used by tce_main.php.
-	 * @param	integer		Record PID. Special field used by tce_main.php. OBSOLETE
-	 * @param	integer		The page_uid (pid) where the event occurred. Used to select log-content for specific pages.
-	 * @param	string		Special field used by tce_main.php. NEWid string of newly created records.
-	 * @param	integer		Alternative Backend User ID (used for logging login actions where this is not yet known).
-	 * @return	integer		Log entry ID.
-	 */
-	function writelog($type,$action,$error,$details_nr,$details,$data,$tablename='',$recuid='',$recpid='',$event_pid=-1,$NEWid='',$userId=0) {
-		t3lib_userAuthGroup::writelog($type, $action, $error, $details_nr, $details, $data, $tablename, $recuid, $recpid, $event_pid, $NEWid, $userId);
-	}
+
 
 }
 
-
-if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_ipauth/sv1/class.tx_feipauth_sv1.php'])	{
-	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_ipauth/sv1/class.tx_feipauth_sv1.php']);
-}
 
 ?>

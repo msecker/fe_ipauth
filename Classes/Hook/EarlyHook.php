@@ -1,6 +1,9 @@
 <?php
+namespace Alto\FeIpauth\Hook;
 /***************************************************************
 *  Copyright notice
+*
+*  (c) 2015 Matthias Secker <secker@alto.de>
 *
 *  (c) 2010 Bernhard Kraft <kraftb@think-open.at>
 *  All rights reserved
@@ -25,6 +28,7 @@
  * This is the earliest hook for TYPO3 FE rendering
  * It is used for setting a simulated IP
  *
+ * @author  Matthias Secker <secker@alto.de>
  * @author	Bernhard Kraft <kraftb@think-open.at>
  */
 /**
@@ -32,7 +36,7 @@
  */
 
 
-class tx_feipauth_earlyHook {
+class EarlyHook {
 
 	/*
 	 * This hook method sets a simluated IP for debugging purposes
@@ -43,7 +47,7 @@ class tx_feipauth_earlyHook {
 	 */
 	public function simulateIP($params, &$parentObject) {
 		if ($simIP = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fe_ipauth']['simulateIP']) {
-			if (t3lib_div::cmpIP(t3lib_div::getIndpEnv('REMOTE_ADDR'), $GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask'])) {
+			if (\TYPO3\CMS\Core\Utility\GeneralUtility::cmpIP(\TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('REMOTE_ADDR'), $GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask'])) {
 				$GLOBALS['ORIG_REMOTE_ADDR'] = $_SERVER['REMOTE_ADDR'];
 				$_SERVER['REMOTE_ADDR'] = $simIP;
 			}
@@ -55,8 +59,6 @@ class tx_feipauth_earlyHook {
 }
 
 
-if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_ipauth/class.tx_feipauth_earlyHook.php']) {
-	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_ipauth/class.tx_feipauth_earlyHook.php']);
-}
+
 
 ?>

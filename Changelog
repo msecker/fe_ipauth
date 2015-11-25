@@ -1,3 +1,10 @@
+2015-11-25	Matthias Secker	<secker@alto.de>
+
+	* Use namespaces
+	* removed reprecated method calls
+	* compatible with TYPO3 6.2
+
+
 2010-08-23  Bernhard Kraft  <kraftb@think-open.at>
 
 	* Finalized manual
